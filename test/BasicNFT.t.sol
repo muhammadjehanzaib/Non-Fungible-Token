@@ -10,7 +10,8 @@ contract testBasicNFT is Test {
     BasicNFT basicNft;
     address public holder = makeAddr("holder");
     uint256 public constant STARTING_BALANCE = 10 ether;
-    string public constant PUG = "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
+    string public constant PUG =
+        "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
 
     function setUp() external {
         deployBasicNft = new DeployBasicNFT();
@@ -32,5 +33,28 @@ contract testBasicNFT is Test {
         basicNft.mintNft(PUG);
 
         assert(basicNft.balanceOf(holder) == 1);
+    }
+
+    function testSymbolByUsingKeccakHash() external view {
+        assertEq(keccak256(abi.encodePacked(basicNft.symbol())), keccak256(abi.encodePacked("Dog")));
+    }
+
+    function testMultipleNFT() external {
+        vm.prank(holder);
+        basicNft.mintNft(PUG);
+        vm.prank(holder);
+        basicNft.mintNft("ipfs://another-uri");
+
+        assertEq(basicNft.balanceOf(holder), 2);
+    }
+
+    function testOwnership() external {
+        vm.startPrank(holder);
+        basicNft.mintNft(PUG);
+        basicNft.mintNft("ipfs://another-uri");
+        vm.stopPrank();
+        assertEq(basicNft.ownerOf(0), holder);
+        assertEq(basicNft.ownerOf(1), holder);
+
     }
 }
